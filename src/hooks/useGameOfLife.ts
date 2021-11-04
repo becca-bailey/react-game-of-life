@@ -1,14 +1,18 @@
-import _ from "lodash";
+import every from "lodash/every";
+import filter from "lodash/filter";
+import find from "lodash/find";
+import flatten from "lodash/flatten";
+import times from "lodash/times";
 import * as React from "react";
-import { Coordinates, Cell } from "../types";
+import {Cell, Coordinates} from "../types";
 
-function useGameOfLife(gridSize: number = 10) {
-  const initialCells = _.flatten(
-    _.times(gridSize, (i) => {
+function useGameOfLife(gridSize: number = 10, randomize = false) {
+  const initialCells = flatten(
+    times(gridSize, (i) => {
       const x = i + 1;
-      return _.times(gridSize, (i2) => {
+      return times(gridSize, (i2) => {
         const y = i2 + 1;
-        return { x, y, living: false };
+        return {x, y, living: randomize ? Math.random() >= 0.5 : false};
       });
     })
   );
@@ -22,21 +26,21 @@ function useGameOfLife(gridSize: number = 10) {
     [setCells, initialCells]
   );
 
-  const hasLivingCells = !_.every(cells, { living: false });
+  const hasLivingCells = !every(cells, {living: false});
 
-  const livingCells = _.filter(cells, { living: true });
+  const livingCells = filter(cells, {living: true});
 
-  function isAliveAt({ x, y }: Coordinates) {
-    const livingCells = _.filter(cells, { living: true });
-    const cell = _.find(livingCells, { x, y });
+  function isAliveAt({x, y}: Coordinates) {
+    const livingCells = filter(cells, {living: true});
+    const cell = find(livingCells, {x, y});
     return !!cell;
   }
 
   const setCell = React.useCallback(
-    function setCell({ x, y, living = false }: Cell) {
+    function setCell({x, y, living = false}: Cell) {
       const updatedCells = cells.map((cell) => {
         if (cell.x === x && cell.y === y) {
-          return { x, y, living };
+          return {x, y, living};
         }
         return cell;
       });
@@ -46,15 +50,15 @@ function useGameOfLife(gridSize: number = 10) {
   );
 
   const setLivingAt = React.useCallback(
-    function setLivingAt({ x, y }: Coordinates) {
-      setCell({ x, y, living: true });
+    function setLivingAt({x, y}: Coordinates) {
+      setCell({x, y, living: true});
     },
     [setCell]
   );
 
   const getLivingNeighbors = React.useCallback(
-    function getLivingNeighbors({ x: x1, y: y1 }: Coordinates) {
-      return _.filter(livingCells, ({ x: x2, y: y2 }) => {
+    function getLivingNeighbors({x: x1, y: y1}: Coordinates) {
+      return filter(livingCells, ({x: x2, y: y2}) => {
         const dx = Math.abs(x1 - x2);
         const dy = Math.abs(y1 - y2);
         const isSame = dx === 0 && dy === 0;

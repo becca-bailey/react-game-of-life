@@ -1,5 +1,5 @@
 import * as React from "react";
-import { Cell as CellType } from "./types";
+import {Cell as CellType} from "../types";
 
 type CellProps = {
   cell: CellType;
@@ -16,17 +16,17 @@ const Cell: React.FunctionComponent<CellProps> = ({
   ...props
 }) => {
   const getBoardPosition = React.useCallback(
-    function(value: number) {
+    function (value: number) {
       return value * size - size;
     },
     [size]
   );
 
-  const { x, y } = cell;
+  const {x, y} = cell;
 
   return (
     <rect
-      style={{ cursor: "pointer" }}
+      style={{cursor: "pointer"}}
       x={getBoardPosition(x)}
       y={getBoardPosition(y)}
       stroke={"black"}
