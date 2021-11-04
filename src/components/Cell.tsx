@@ -22,15 +22,16 @@ const Cell: React.FunctionComponent<CellProps> = ({
     [size]
   );
 
-  const {x, y} = cell;
+  const {x, y, living} = cell;
+
+  if (!living) {
+    return null;
+  }
 
   return (
     <rect
-      style={{cursor: "pointer"}}
       x={getBoardPosition(x)}
       y={getBoardPosition(y)}
-      stroke={"black"}
-      strokeWidth={"1px"}
       width={size}
       height={size}
       fill={fill}

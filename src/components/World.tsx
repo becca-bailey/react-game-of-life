@@ -1,73 +1,71 @@
 import * as React from "react";
 import useGameOfLife from "../hooks/useGameOfLife";
 import Cell from "./Cell";
+import {Cell as CellType, Coordinates} from "../types";
 
 const WIDTH = 600;
-const GRID_SIZE = 80;
+const GRID_SIZE = 100;
 const DELAY_MS = 0;
 
 const FILL_COLOR = "#9a12b3";
-const FILL_COLOR_LIGHT = "#bf55ec";
-const BACKGROUND = "#FFFFFF";
 
 type WorldProps = {
   gridSize?: number;
   width?: number;
 };
 
+type GridProps = WorldProps & {
+  cells: CellType[];
+  setLivingAt: (coordinates: Coordinates) => void;
+};
+
+const SVGGrid: React.FC<GridProps> = ({
+  gridSize = GRID_SIZE,
+  width = WIDTH,
+  cells,
+  setLivingAt,
+}) => {
+  return (
+    <svg width={width} height={width} viewBox={`0 0 ${width} ${width}`}>
+      {cells.map((cell) => {
+        const {x, y} = cell;
+        return (
+          <Cell
+            size={width / gridSize}
+            cell={cell}
+            fill={FILL_COLOR}
+            key={`${x}-${y}`}
+            onClick={() => {
+              setLivingAt({x, y});
+            }}
+          />
+        );
+      })}
+    </svg>
+  );
+};
+
 const World: React.FC<WorldProps> = ({gridSize = GRID_SIZE, width = WIDTH}) => {
   const [running, setRunning] = React.useState(false);
-  const {
-    cells,
-    setLivingAt,
-    tick,
-    reset,
-    isAliveInNextGeneration,
-    hasLivingCells,
-  } = useGameOfLife(gridSize, true);
-
-  if (running && hasLivingCells) {
-    setTimeout(() => {
-      tick();
-    }, DELAY_MS);
-  }
+  const {cells, setLivingAt, tick, reset, hasLivingCells} = useGameOfLife(
+    gridSize,
+    true
+  );
 
   React.useEffect(() => {
     if (running && !hasLivingCells) {
       setRunning(false);
     }
-  }, [running, setRunning, hasLivingCells]);
-
-  const getFill = React.useCallback(
-    function (cell) {
-      const {living} = cell;
-      let fill = BACKGROUND;
-      if (living) {
-        fill = isAliveInNextGeneration(cell) ? FILL_COLOR_LIGHT : FILL_COLOR;
-      }
-      return fill;
-    },
-    [isAliveInNextGeneration]
-  );
+    if (running && hasLivingCells) {
+      setTimeout(() => {
+        tick();
+      }, DELAY_MS);
+    }
+  }, [running, setRunning, hasLivingCells, tick]);
 
   return (
     <>
-      <svg width={width} height={width} viewBox={`0 0 ${width} ${width}`}>
-        {cells.map((cell) => {
-          const {x, y} = cell;
-          return (
-            <Cell
-              size={width / gridSize}
-              cell={cell}
-              fill={getFill(cell)}
-              key={`${x}-${y}`}
-              onClick={() => {
-                setLivingAt({x, y});
-              }}
-            />
-          );
-        })}
-      </svg>
+      <SVGGrid cells={cells} setLivingAt={setLivingAt}></SVGGrid>
       <div>
         <button disabled={running} onClick={() => tick()}>
           Tick
