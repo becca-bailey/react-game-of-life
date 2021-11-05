@@ -16,16 +16,20 @@ function useGameOfLife({
   gridSize = 10,
   initialRatio = 0,
 }: GameOfLifeConfig = {}) {
-  const initialCells = flatten(
-    times(gridSize, (i) => {
-      const x = i + 1;
-      return times(gridSize, (i2) => {
-        const y = i2 + 1;
-        // randomly determine whether the cell is initially populated depending on the ratio of populated cells
-        const living = Math.random() < initialRatio;
-        return {x, y, living};
-      });
-    })
+  const initialCells = React.useMemo(
+    () =>
+      flatten(
+        times(gridSize, (i) => {
+          const x = i + 1;
+          return times(gridSize, (i2) => {
+            const y = i2 + 1;
+            // randomly determine whether the cell is initially populated depending on the ratio of populated cells
+            const living = Math.random() < initialRatio;
+            return {x, y, living};
+          });
+        })
+      ),
+    [initialRatio, gridSize]
   );
 
   const [cells, setCells] = React.useState(initialCells);
