@@ -41,15 +41,23 @@ function useGameOfLife({
     [setCells, initialCells]
   );
 
-  const hasLivingCells = !every(cells, {living: false});
+  const hasLivingCells = React.useMemo(
+    () => !every(cells, {living: false}),
+    [cells]
+  );
 
-  const livingCells = filter(cells, {living: true});
+  const livingCells = React.useMemo(
+    () => filter(cells, {living: true}),
+    [cells]
+  );
 
-  function isAliveAt({x, y}: Coordinates) {
-    const livingCells = filter(cells, {living: true});
-    const cell = find(livingCells, {x, y});
-    return !!cell;
-  }
+  const isAliveAt = React.useCallback(
+    ({x, y}: Coordinates) => {
+      const cell = find(livingCells, {x, y});
+      return !!cell;
+    },
+    [livingCells]
+  );
 
   const setCell = React.useCallback(
     function setCell({x, y, living = false}: Cell) {
