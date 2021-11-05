@@ -6,13 +6,24 @@ import times from "lodash/times";
 import * as React from "react";
 import {Cell, Coordinates} from "../types";
 
-function useGameOfLife(gridSize: number = 10, randomize = false) {
+type GameOfLifeConfig = {
+  gridSize?: number;
+  // Initial ratio is a number between 0 and 1 that determines how populated the board is initially
+  initialRatio?: number;
+};
+
+function useGameOfLife({
+  gridSize = 10,
+  initialRatio = 0,
+}: GameOfLifeConfig = {}) {
   const initialCells = flatten(
     times(gridSize, (i) => {
       const x = i + 1;
       return times(gridSize, (i2) => {
         const y = i2 + 1;
-        return {x, y, living: randomize ? Math.random() >= 0.5 : false};
+        // randomly determine whether the cell is initially populated depending on the ratio of populated cells
+        const living = Math.random() < initialRatio;
+        return {x, y, living};
       });
     })
   );

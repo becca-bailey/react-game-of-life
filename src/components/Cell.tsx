@@ -5,14 +5,12 @@ type CellProps = {
   cell: CellType;
   fill: string;
   size: number;
-  onClick(): void;
 };
 
 const Cell: React.FunctionComponent<CellProps> = ({
   cell,
   fill,
   size,
-  onClick,
   ...props
 }) => {
   const getBoardPosition = React.useCallback(
@@ -35,7 +33,6 @@ const Cell: React.FunctionComponent<CellProps> = ({
       width={size}
       height={size}
       fill={fill}
-      onClick={onClick}
       {...props}
     />
   );

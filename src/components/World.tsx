@@ -1,7 +1,7 @@
 import * as React from "react";
 import useGameOfLife from "../hooks/useGameOfLife";
 import Cell from "./Cell";
-import {Cell as CellType, Coordinates} from "../types";
+import {Cell as CellType} from "../types";
 
 const WIDTH = 600;
 const GRID_SIZE = 100;
@@ -9,21 +9,18 @@ const DELAY_MS = 0;
 
 const FILL_COLOR = "#9a12b3";
 
-type WorldProps = {
+type GridProps = {
+  cells: CellType[];
   gridSize?: number;
   width?: number;
 };
 
-type GridProps = WorldProps & {
-  cells: CellType[];
-  setLivingAt: (coordinates: Coordinates) => void;
-};
+type RenderMethod = "SVG" | "CANVAS";
 
 const SVGGrid: React.FC<GridProps> = ({
   gridSize = GRID_SIZE,
   width = WIDTH,
   cells,
-  setLivingAt,
 }) => {
   return (
     <svg width={width} height={width} viewBox={`0 0 ${width} ${width}`}>
@@ -35,9 +32,6 @@ const SVGGrid: React.FC<GridProps> = ({
             cell={cell}
             fill={FILL_COLOR}
             key={`${x}-${y}`}
-            onClick={() => {
-              setLivingAt({x, y});
-            }}
           />
         );
       })}
@@ -45,12 +39,53 @@ const SVGGrid: React.FC<GridProps> = ({
   );
 };
 
-const World: React.FC<WorldProps> = ({gridSize = GRID_SIZE, width = WIDTH}) => {
-  const [running, setRunning] = React.useState(false);
-  const {cells, setLivingAt, tick, reset, hasLivingCells} = useGameOfLife(
-    gridSize,
-    true
+const CanvasGrid: React.FC<GridProps> = ({
+  gridSize = GRID_SIZE,
+  width = WIDTH,
+  cells,
+}) => {
+  const size = width / gridSize;
+
+  const getBoardPosition = React.useCallback(
+    function (value: number) {
+      return value * size - size;
+    },
+    [size]
   );
+
+  const canvasRef: React.RefObject<any> = React.useRef();
+
+  React.useEffect(() => {
+    const ctx = canvasRef.current.getContext("2d");
+    ctx.clearRect(0, 0, width, width);
+    cells.forEach(({x, y, living}) => {
+      if (living) {
+        ctx.beginPath();
+        ctx.fillStyle = FILL_COLOR;
+        ctx.rect(getBoardPosition(x), getBoardPosition(y), size, size);
+        ctx.fill();
+      }
+    });
+  }, [cells, canvasRef, getBoardPosition, size, width]);
+
+  return <canvas width={width} height={width} ref={canvasRef} />;
+};
+
+const World = () => {
+  const searchParams = new URLSearchParams(window.location.search);
+  const gridSize = searchParams.has("gridSize")
+    ? parseInt(searchParams.get("gridSize")!)
+    : GRID_SIZE;
+  const initialRatio = searchParams.has("initialRatio")
+    ? parseFloat(searchParams.get("initialRatio")!)
+    : 0.25;
+
+  const [renderMethod, setRenderMethod] = React.useState<RenderMethod>("SVG");
+  const [running, setRunning] = React.useState(false);
+  const {cells, tick, reset, hasLivingCells} = useGameOfLife({
+    gridSize,
+    initialRatio,
+  });
 
   React.useEffect(() => {
     if (running && !hasLivingCells) {
@@ -65,8 +100,20 @@ const World: React.FC<WorldProps> = ({gridSize = GRID_SIZE, width = WIDTH}) => {
 
   return (
     <>
-      <SVGGrid cells={cells} setLivingAt={setLivingAt}></SVGGrid>
+      {renderMethod === "SVG" && <SVGGrid cells={cells} gridSize={gridSize} />}
+      {renderMethod === "CANVAS" && (
+        <CanvasGrid cells={cells} gridSize={gridSize} />
+      )}
       <div>
+        <select
+          value={renderMethod}
+          onChange={(event) =>
+            setRenderMethod(event.target.value as RenderMethod)
+          }
+        >
+          <option value="SVG">SVG</option>
+          <option value="CANVAS">Canvas</option>
+        </select>
         <button disabled={running} onClick={() => tick()}>
           Tick
         </button>
